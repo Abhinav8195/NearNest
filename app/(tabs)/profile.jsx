@@ -1,14 +1,36 @@
-import { View, Text, SafeAreaView, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native';
-import React from 'react';
-import { auth } from '../../config/firebase';
+import React, { useState, useEffect } from 'react';
+import { View, Text, SafeAreaView, TouchableOpacity, Image, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { auth, db } from '../../config/firebase';
 import { useRouter } from 'expo-router';
 import { theme } from '../../constants/theme';
 import { hp, wp } from '../../helpers/common';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { doc, onSnapshot } from 'firebase/firestore';  // Import onSnapshot for real-time updates
 
 export default function Profile() {
+  const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState(null);
   const user = auth.currentUser;
   const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = () => {
+      if (user) {
+        const userRef = doc(db, 'users', user.uid);
+        const unsubscribeSnapshot = onSnapshot(userRef, (userDoc) => {
+          if (userDoc.exists()) {
+            setUserData(userDoc.data());
+           }
+        });
+        return () => unsubscribeSnapshot();
+      }
+    };
+
+    unsubscribe();
+
+    // Remove loading indicator once data is fetched
+    setLoading(false);
+  }, [user]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -37,12 +59,20 @@ export default function Profile() {
     );
   };
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.Colors.primary} />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.profileHeader}>
         {/* Header with Username and Logout Button */}
         <View style={styles.headerRow}>
-          <Text style={styles.username}>abhinav_username</Text>
+          <Text style={styles.username}>{userData?.username}</Text>
           <TouchableOpacity onPress={handleLogout}>
             <MaterialIcons name="logout" size={28} color="black" />
           </TouchableOpacity>
@@ -51,7 +81,7 @@ export default function Profile() {
         {/* Profile Info with Image and Stats */}
         <View style={styles.profileInfoContainer}>
           <Image
-            source={require('../../assets/images/defaultUser.png')}
+            source={userData?.profilePicture ? { uri: userData.profilePicture } : require('../../assets/images/defaultUser.png')}
             style={styles.profileImage}
           />
 
@@ -97,9 +127,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   profileHeader: {
     marginHorizontal: wp(4),
-    paddingBottom: 20, // Padding to space out elements from the bottom
+    paddingBottom: 20,
   },
   headerRow: {
     flexDirection: 'row',

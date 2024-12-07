@@ -5,6 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import { UserProvider } from '../helpers/UserContext';
 
 
 
@@ -34,14 +35,15 @@ export default function RootLayout() {
   }
 
   return (
-  
+    <UserProvider>
       <Stack screenOptions={{
         headerShown:false
       }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="index" />
+        <Stack.Screen name="editProfile" />
       </Stack>
-      // <StatusBar style="auto" />
+      </UserProvider>
 
   );
 }

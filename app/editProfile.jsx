@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, Pressable, TextInput, ScrollView, Platform, KeyboardAvoidingView } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, Pressable, TextInput, ScrollView, Platform, KeyboardAvoidingView, ActivityIndicator, Image } from 'react-native';
 import { theme } from '../constants/theme';
 import { hp } from '../helpers/common';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import Avatar from '../components/Avatar';
 import { Picker } from '@react-native-picker/picker';
 import Feather from '@expo/vector-icons/Feather';
 import defaultUserImage from '../assets/images/defaultUser.png';
@@ -25,66 +24,75 @@ const EditProfile = () => {
   const [gender, setGender] = useState('Male');
   const [link, setLink] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingData, setDataLoading] = useState(false);
 
   const user = auth.currentUser;
   const userId = user?.uid;
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-        try {
-            const userDoc = await getDoc(doc(db, 'users', userId));
-            if (userDoc.exists()) {
-                const userData = userDoc.data();
-                setName(userData.name || '');
-                setUsername(userData.username || '');
-                setBio(userData.bio || '');
-                setPhoneNumber(userData.phoneNumber || '');
-                setGender(userData.gender || 'Male'); // Fallback to 'Male'
-                setLink(userData.link || '');
-                setSelectedImage(userData.profilePicture || defaultUserImage);
-            }
-        } catch (error) {
-            console.log('Error fetching user profile:', error);
+      try {
+        setDataLoading(true);
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setName(userData.name || '');
+          setUsername(userData.username || '');
+          setBio(userData.bio || '');
+          setPhoneNumber(userData.phoneNumber || '');
+          setGender(userData.gender || 'Male');
+          setLink(userData.link || '');
+          setSelectedImage(userData.profilePicture || defaultUserImage);
         }
+      } catch (error) {
+        console.log('Error fetching user profile:', error);
+      } finally {
+        setDataLoading(false);
+      }
     };
 
     if (userId) {
-        fetchUserProfile();
+      fetchUserProfile();
     }
-}, [userId]);
+  }, [userId]);
 
+  if (loadingData) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.Colors.primary} />
+      </SafeAreaView>
+    );
+  }
 
   const handleUpdate = async () => {
     setLoading(true);
 
     try {
-        const userRef = doc(db, 'users', userId);
+      const userRef = doc(db, 'users', userId);
+      const imageToSave = selectedImage || defaultUserImage;
 
-        const imageToSave = selectedImage || defaultUserImage;
+      await setDoc(userRef, {
+        name: name || '',
+        username: username || '',
+        bio: bio || '',
+        phoneNumber: phoneNumber || '',
+        gender: gender || 'Male',
+        link: link || '',
+        profilePicture: imageToSave,
+      });
 
-        await setDoc(userRef, {
-            name: name || '',
-            username: username || '',
-            bio: bio || '',
-            phoneNumber: phoneNumber || '',
-            gender: gender || 'Male', 
-            link: link || '',
-            profilePicture: imageToSave,
-        });
-
-        alert('Profile updated successfully');
+      alert('Profile updated successfully');
+      router.replace('/profile')
     } catch (error) {
-        console.log('Error updating profile:', error);
-        alert('Error updating profile');
+      console.log('Error updating profile:', error);
+      alert('Error updating profile');
     }
 
     setLoading(false);
-};
-
+  };
 
   const openGallery = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
     if (permissionResult.granted === false) {
       alert('Permission to access gallery is required!');
       return;
@@ -97,7 +105,7 @@ const EditProfile = () => {
     });
 
     if (!result.canceled) {
-        setSelectedImage(result.assets[0].uri);
+      setSelectedImage(result.assets[0].uri);
     }
   };
 
@@ -123,7 +131,10 @@ const EditProfile = () => {
 
           <View style={{ gap: 15, marginTop: 30 }}>
             <View style={styles.avatarContainer}>
-              <Avatar uri={selectedImage || defaultUserImage} size={hp(12)} rounded={theme.radius.xxl * 1.4} style={{ borderWidth: 2 }} />
+              <Image
+                source={{ uri: selectedImage || defaultUserImage }}
+                style={styles.profileImage}
+              />
               <Pressable style={styles.editIcon} onPress={openGallery}>
                 <Feather name="edit-3" size={20} color="black" />
               </Pressable>
@@ -246,6 +257,11 @@ const styles = StyleSheet.create({
     width: hp(12),
     alignSelf: 'center',
   },
+  profileImage: {
+    height: '100%',
+    width: '100%',
+    borderRadius: 50,
+  },
   editIcon: {
     position: 'absolute',
     bottom: 0,
@@ -278,6 +294,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     fontSize: hp(1.8),
     color: theme.Colors.textDark,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
