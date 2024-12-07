@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, SafeAreaView, TouchableOpacity, Image, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, SafeAreaView, TouchableOpacity, Image, StyleSheet, Alert, ActivityIndicator, Linking } from 'react-native';
 import { auth, db } from '../../config/firebase';
 import { useRouter } from 'expo-router';
 import { theme } from '../../constants/theme';
@@ -12,6 +12,7 @@ export default function Profile() {
   const [userData, setUserData] = useState(null);
   const user = auth.currentUser;
   const router = useRouter();
+  console.log('abcd', userData);
 
   useEffect(() => {
     const unsubscribe = () => {
@@ -20,7 +21,7 @@ export default function Profile() {
         const unsubscribeSnapshot = onSnapshot(userRef, (userDoc) => {
           if (userDoc.exists()) {
             setUserData(userDoc.data());
-           }
+          }
         });
         return () => unsubscribeSnapshot();
       }
@@ -57,6 +58,18 @@ export default function Profile() {
       ],
       { cancelable: true }
     );
+  };
+
+  // Function to extract URL and open it
+  const handleLinkPress = (text) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const match = text.match(urlRegex); // Extract URL using regex
+
+    if (match && match[0]) {
+      Linking.openURL(match[0]).catch((err) => console.error('Failed to open link:', err));
+    } else {
+      Alert.alert('Invalid Link', 'No valid URL found in the text.');
+    }
   };
 
   if (loading) {
@@ -105,7 +118,18 @@ export default function Profile() {
 
         {/* User's Email */}
         <View style={styles.emailContainer}>
-          <Text style={styles.emailText}>{user?.email}</Text>
+          <Text style={styles.emailText}>{userData?.name}</Text>
+        </View>
+
+        <View style={styles.profileContainer}>
+          <Text style={styles.emailText}>{userData?.bio}</Text>
+        </View>
+
+        {/* Make the link clickable */}
+        <View style={styles.profileContainer}>
+          <TouchableOpacity onPress={() => handleLinkPress(userData?.link)}>
+            <Text style={styles.linkText}>🔗 {userData?.link}</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Edit and Share Profile Buttons */}
@@ -178,10 +202,19 @@ const styles = StyleSheet.create({
   emailContainer: {
     marginTop: 10,
   },
+  profileContainer:{
+    marginTop:2
+  },
   emailText: {
-    fontSize: 16,
-    color: theme.Colors.text,
+    fontSize: 14,
+    color: theme.Colors.textDark,
     fontWeight: '500',
+  },
+  linkText: {
+    fontSize: 14,
+    color: theme.Colors.primary,  // You can set any color here
+    fontWeight: '500',
+    textDecorationLine: 'underline',
   },
   buttonsContainer: {
     flexDirection: 'row',

@@ -108,7 +108,9 @@ const EditProfile = () => {
       setSelectedImage(result.assets[0].uri);
     }
   };
-
+  const clearLink = () => {
+    setLink('');
+  };
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
@@ -209,14 +211,21 @@ const EditProfile = () => {
             {/* Link */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Link (Optional)</Text>
-              <TextInput
-                style={styles.input}
-                value={link}
-                onChangeText={setLink}
-                placeholder="Enter a link (e.g., social media or website)"
-                placeholderTextColor={theme.Colors.textLight}
-                keyboardType="url"
-              />
+              <View style={styles.linkInputContainer}>
+                <TextInput
+                  style={styles.input}
+                  value={link}
+                  onChangeText={setLink}
+                  placeholder="Enter a link (e.g., social media or website)"
+                  placeholderTextColor={theme.Colors.textLight}
+                  keyboardType="url"
+                />
+                {link.length > 0 && (
+                  <TouchableOpacity onPress={clearLink} style={styles.clearIconContainer}>
+                    <Ionicons name="close-circle" size={20} color="gray" />
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
           </View>
 
@@ -285,6 +294,19 @@ const styles = StyleSheet.create({
     color: theme.Colors.textDark,
     marginBottom: 5,
   },
+  inputContainer: {
+    width: '95%',
+    marginVertical: 10,
+  },
+  linkInputContainer: {
+    position: 'relative',
+  },
+  label: {
+    fontSize: hp(1.6),
+    fontWeight: '500',
+    color: theme.Colors.textDark,
+    marginBottom: 5,
+  },
   input: {
     height: hp(6),
     width: '100%',
@@ -294,6 +316,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     fontSize: hp(1.8),
     color: theme.Colors.textDark,
+  },
+  clearIconContainer: {
+    position: 'absolute',
+    right: 10,
+    top: '50%',
+    transform: [{ translateY: -10 }],
   },
   loadingContainer: {
     flex: 1,
