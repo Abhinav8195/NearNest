@@ -20,25 +20,49 @@ export default function SignIn() {
     router.replace('auth/sign-up')
   }
 
-  const OnSignIn = () => {
+  const OnSignIn = async() => {
+    const isPasswordValid = (password) => {
+      const minLength = 8;
+      const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/; 
+      return password.length >= minLength && specialCharRegex.test(password);
+    };
+    
+
     if (!email && !password) {
       Platform.OS==='android'?ToastAndroid.show('Please Enter Email & Password', ToastAndroid.LONG):
       Alert.alert("Please Enter Email & Password")
       return;
     }
-    signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        const user = userCredential.user;
+    if (!isPasswordValid(password)) {
+      Platform.OS==='android'?ToastAndroid.show('Password must be at least 8 characters long and contain a special character.', ToastAndroid.LONG):
+      Alert.alert("Password must be at least 8 characters long and contain a special character.")
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
         router.replace('/home')
-      })
-      .catch((error) => {
+      }catch (error) {
         const errorCode = error.code;
         const errorMessage = error.message;
-        console.log(errorCode, errorMessage)
-        if (errorCode == 'auth/invalid-credential') {
-          ToastAndroid.show('Invalid Email or Password', ToastAndroid.LONG)
+        console.log(errorCode, errorMessage);
+        if (errorCode === 'auth/email-already-in-use') {
+          Platform.OS=="android"? ToastAndroid.show('Email is already registered.',ToastAndroid.LONG)  :
+          Alert.alert('Email is already registered.');
+        } else if (errorCode == 'auth/invalid-credential'){
+          Platform.OS=="android"?ToastAndroid.show('Invalid Email or Password', ToastAndroid.LONG):
+          Alert.alert('Invalid Email or Password');
         }
-      });
+        else {
+          Platform.OS=="android"? ToastAndroid.show('Invalid Email or Password', ToastAndroid.LONG):
+          Alert.alert('Invalid Email or Password');
+        }
+      }finally {
+        setLoading(false);
+      }
   }
 
   const handleForget = () => {
@@ -91,7 +115,7 @@ export default function SignIn() {
        <View style={styles.footer}>
         <Text style={styles.footerText}>Don't have an account? </Text>
         <TouchableOpacity onPress={handlesignup}>
-          <Text style={[styles.footerText ,{color:theme.Colors.primaryDark,fontWeight:theme.fonts.semibold}]}>Sing up</Text>
+          <Text style={[styles.footerText ,{color:theme.Colors.primaryDark,fontWeight:theme.fonts.semibold}]}>Sign up</Text>
         </TouchableOpacity>
        </View>
 
