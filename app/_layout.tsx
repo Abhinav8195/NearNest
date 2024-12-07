@@ -6,16 +6,22 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
+
+
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+
   const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+ 
+    'Cbold':require('../assets/fonts/Caudex-Bold.ttf'),
+    'CboldItalic':require('./../assets/fonts/Caudex-BoldItalic.ttf'),
+    'Citalic':require('./../assets/fonts/Caudex-Italic.ttf'),
+    'Cregular':require('./../assets/fonts/Caudex-Regular.ttf'),
   });
+
+
 
   useEffect(() => {
     if (loaded) {
@@ -28,12 +34,14 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
+  
+      <Stack screenOptions={{
+        headerShown:false
+      }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
+        <Stack.Screen name="index" />
       </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+      // <StatusBar style="auto" />
+
   );
 }
