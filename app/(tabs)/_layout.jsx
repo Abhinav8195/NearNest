@@ -4,6 +4,7 @@ import { Platform, TouchableOpacity } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 // import { Colors } from '@/constants/Colors';
+
 import { useColorScheme } from '@/hooks/useColorScheme';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import Feather from '@expo/vector-icons/Feather';
@@ -48,14 +49,14 @@ export default function TabLayout() {
         name="explore"
         options={{
           title: '',
-          tabBarIcon: ({ color }) => <FontAwesome name="tachometer" size={24} color="black" />,
+          tabBarIcon: ({ color }) => <Feather name="search" size={24} color="black" />,
         }}
       />
         <Tabs.Screen
-        name="post"
+        name="map"
         options={{
           title: '',
-          tabBarIcon: ({ color }) =>  <Feather name="plus-square" size={24} color="black" />,
+          tabBarIcon: ({ color }) => <FontAwesome name="map-o" size={22} color="black" />,
         }}
       />
       <Tabs.Screen
