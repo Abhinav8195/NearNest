@@ -35,6 +35,10 @@ const Home = () => {
     }
   };
 
+  
+  const handleChat=()=>{
+    router.replace('../chat');
+  }
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
       <View style={styles.container}>
@@ -48,6 +52,8 @@ const Home = () => {
               <FontAwesome name="plus-square-o" size={hp(3.2)} strokeWidth={2} color={theme.Colors.text} />
             </Pressable>
             <Pressable>
+              </Pressable>
+              <Pressable onPress={handleChat}>
               <Ionicons name="paper-plane-outline" size={hp(3.2)} strokeWidth={2} color={theme.Colors.text} />
             </Pressable>
           </View>
