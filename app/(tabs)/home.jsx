@@ -47,7 +47,7 @@ const Home = () => {
             <Pressable onPress={openImagePicker}>
               <FontAwesome name="plus-square-o" size={hp(3.2)} strokeWidth={2} color={theme.Colors.text} />
             </Pressable>
-            <Pressable>
+            <Pressable onPress={() => router.push('chat/chatScreen')}>
               <Ionicons name="paper-plane-outline" size={hp(3.2)} strokeWidth={2} color={theme.Colors.text} />
             </Pressable>
           </View>

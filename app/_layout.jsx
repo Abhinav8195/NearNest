@@ -5,7 +5,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-import { UserProvider } from '../helpers/UserContext';
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import ChatContextProvider from '../context/ChatContext';
 
 
 
@@ -35,15 +36,18 @@ export default function RootLayout() {
   }
 
   return (
-    <UserProvider>
-      <Stack screenOptions={{
-        headerShown:false
-      }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="index" />
-        <Stack.Screen name="editProfile" />
-      </Stack>
-      </UserProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+    <ChatContextProvider>
+     
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="index" />
+          <Stack.Screen name="editProfile" />
+          <Stack.Screen name="chat" />
+        </Stack>
+      
+    </ChatContextProvider>
+  </GestureHandlerRootView>
 
   );
 }
