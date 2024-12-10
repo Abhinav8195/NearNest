@@ -1,95 +1,148 @@
-import React, { useState, useEffect } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, Pressable, Image, View } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { SafeAreaView, ScrollView, StyleSheet, Text, Pressable, Image, View, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { AntDesign } from '@expo/vector-icons';  // Importing AntDesign for the back icon
+import { AntDesign, MaterialIcons } from '@expo/vector-icons'; 
+import RichTextEditor from '../components/RichTextEditor';
+import { theme } from '../constants/theme';
 
 const Post = () => {
-  const { selectedImages } = useLocalSearchParams(); // Get selected images from the query params
-  const [images, setImages] = useState(selectedImages ? selectedImages.split(',') : []); // Split string to array if needed
+  const { selectedImages } = useLocalSearchParams(); 
+  const [images, setImages] = useState(selectedImages ? selectedImages.split(',') : []); 
+  const [location, setLocation] = useState('');
   const router = useRouter();
+  const bodyref = useRef('');
+  const editorRef = useRef(null);
+  const [loading, setLoading] = useState(false);
 
-  // Debugging step: log the selectedImages and images
   useEffect(() => {
     console.log('Selected images:', selectedImages);
     console.log('Parsed images:', images);
   }, [selectedImages, images]);
 
   const handlePost = () => {
-    // Handle post submission (send images, caption, etc.)
-    console.log('Post submitted with images:', images);
+    console.log('Post submitted with images:', images, 'location:', location);
   };
 
-  // Go back to the previous page when back icon is pressed
   const handleBack = () => {
     router.back();
   };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
-        {/* Header with back icon */}
-        <View style={styles.headerContainer}>
-          <Pressable onPress={handleBack} style={styles.backIcon}>
-            <AntDesign name="arrowleft" size={24} color="black" />
-          </Pressable>
-          <Text style={styles.header}>New Post</Text>
-        </View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+          <View style={styles.container}>
+            <View style={styles.header}>
+              <Pressable onPress={handleBack} style={styles.iconWrapper}>
+                <AntDesign name="arrowleft" size={24} color="black" />
+              </Pressable>
+              <Text style={styles.headerTitle}>New Post</Text>
+              <View style={styles.emptySpace} />
+            </View>
+            <RichTextEditor editorRef={editorRef} onChange={body => (bodyref.current = body)} />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.imageScrollContainer}
+            >
+              {images.length > 0 ? (
+                images.map((image, index) => (
+                  <View key={index} style={styles.imageWrapper}>
+                    <Image source={{ uri: image }} style={styles.imagePreview} />
+                  </View>
+                ))
+              ) : (
+                <Text>No images selected</Text>
+              )}
+            </ScrollView>
 
-        {/* Image Preview Container */}
-        <View style={styles.imagePreviewContainer}>
-          {images.length > 0 ? (
-            images.map((image, index) => (
-              <Image
-                key={index}
-                source={{ uri: image }}
-                style={styles.imagePreview}
-                onError={(e) => console.log('Error loading image:', e.nativeEvent.error)}
-              />
-            ))
-          ) : (
-            <Text>No images selected</Text>
-          )}
-        </View>
+           
 
-        {/* Submit Button */}
-        <Pressable style={styles.submitButton} onPress={handlePost}>
-          <Text style={styles.submitButtonText}>Submit</Text>
-        </Pressable>
-      </ScrollView>
+            {/* Location Input with Heading and Icon */}
+            <View style={styles.locationContainer}>
+              <MaterialIcons name="location-on" size={24} color="black" />
+              <Text style={styles.locationLabel}>Add Location</Text>
+            </View>
+            <TextInput
+              style={styles.locationInput}
+              placeholder="Enter location"
+              value={location}
+              onChangeText={setLocation}
+            />
+
+            {/* Submit Button */}
+            <Pressable style={styles.submitButton} onPress={handlePost}>
+              <Text style={styles.submitButtonText}>Submit</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  backIcon: {
+  container: {
+    flex: 1,
+    backgroundColor: 'white',
     padding: 10,
   },
   header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 15,
   },
-  imagePreviewContainer: {
-    marginBottom: 20,
-    alignItems: 'center', // Center align the images
+  iconWrapper: {
+    padding: 10,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    flex: 1,
+    textAlign: 'center',
+  },
+  emptySpace: {
+    width: 40,
+  },
+  imageScrollContainer: {
+    paddingVertical: 10,
+  },
+  imageWrapper: {
+    marginHorizontal: 5,  
   },
   imagePreview: {
-    width: 300,
-    height: 200,
-    marginBottom: 10,
-    resizeMode: 'contain', // Ensure the images are contained within the view
+    width: 130,  // Adjusted size for a slightly smaller image
+    height: 130,  // Matching height to width for a square aspect ratio
+    borderRadius: 10,
+    resizeMode: 'cover', // Ensure images maintain aspect ratio and fill the view
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  locationLabel: {
+    fontSize: 16,
+    marginLeft: 8,
+  },
+  locationInput: {
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 10,
+    marginTop: 10,
+    fontSize: 16,
   },
   submitButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: theme.Colors.primary,
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
+    marginTop: 20,
   },
   submitButtonText: {
     color: 'white',

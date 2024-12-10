@@ -15,7 +15,10 @@ const SelectItem = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const handleNext = () => {
-    router.push('post', { selectedImages: selectedImages });
+    router.push({
+      pathname: 'post',
+      params: { selectedImages },
+    });
 
   };
 
