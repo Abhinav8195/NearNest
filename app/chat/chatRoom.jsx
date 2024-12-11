@@ -7,14 +7,17 @@ import { useNavigation } from 'expo-router';
 const ChatRoom = () => {
   const { currentChannel } = useChatContext();
   const navigation = useNavigation();
+  console.log('ot',currentChannel?.data?.created_by?.name)
 
   useEffect(() => {
-    navigation.setOptions({
-      headerShown: true,
-      headerBackTitleVisible: '',
-      title: currentChannel?.data?.name || 'Channel',
-    });
-  }, [currentChannel?.data?.name]);
+    if (currentChannel) {
+      navigation.setOptions({
+        headerShown: true,
+        headerBackTitleVisible: '',
+        title: currentChannel?.data?.created_by?.name || 'Chat',
+      });
+    }
+  }, [currentChannel]); 
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>

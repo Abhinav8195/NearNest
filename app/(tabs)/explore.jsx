@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Pressable, SafeAreaView, StyleSheet, Text, View, FlatList, Image, Alert } from 'react-native';
-import { getFirestore, collection, getDocs, updateDoc, doc, arrayUnion } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, updateDoc, doc, arrayUnion, getDoc } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 import { auth } from '@/config/firebase';
 
@@ -12,7 +12,6 @@ const Explore = () => {
   const router = useRouter();
   const currentUser = auth.currentUser;
 
-  // Fetch all users from Firestore
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -35,37 +34,46 @@ const Explore = () => {
     fetchUsers();
   }, [currentUser]);
 
-  // Add friend functionality
+  const fetchCurrentUserDetails = async () => {
+    const userDocRef = doc(db, "users", currentUser.uid);
+    const userDoc = await getDoc(userDocRef);
+    return userDoc.exists() ? userDoc.data() : {};
+  };
+
   const addFriend = async (friendUid, friendName, friendProfilePicture) => {
     if (!currentUser) return;
 
+    const validFriendName = friendName || "Unnamed Friend";
+    const validFriendProfilePicture = friendProfilePicture || 'https://via.placeholder.com/150';
+
     try {
-      // Show loading or prevent multiple presses
-      console.log("Sending friend request...");
+      const currentUserDetails = await fetchCurrentUserDetails();
+      const currentUserDisplayName = currentUserDetails.name || "Unnamed User";
+      const currentUserProfilePicture = currentUserDetails.photoURL || 'https://via.placeholder.com/150';
 
       const currentUserDoc = doc(db, "users", currentUser.uid);
       const friendDoc = doc(db, "users", friendUid);
 
-      // Update current user’s friends array
-      await updateDoc(currentUserDoc, {
+      const currentUserUpdate = {
         friends: arrayUnion({
           uid: friendUid,
-          name: friendName,
-          profilePicture: friendProfilePicture,
+          name: validFriendName,
+          profilePicture: validFriendProfilePicture,
         }),
-      });
+      };
+      await updateDoc(currentUserDoc, currentUserUpdate);
 
-      // Update friend’s friends array
-      await updateDoc(friendDoc, {
+      const friendUpdate = {
         friends: arrayUnion({
           uid: currentUser.uid,
-          name: currentUser.displayName,
-          profilePicture: currentUser.photoURL,
+          name: currentUserDisplayName,
+          profilePicture: currentUserProfilePicture,
+          status: "pending",
         }),
-      });
+      };
+      await updateDoc(friendDoc, friendUpdate);
 
-      Alert.alert("Success", "Friendship established!");
-      console.log("Friendship established between", currentUser.uid, "and", friendUid);
+      Alert.alert("Success", "Friendship request sent!");
     } catch (error) {
       console.error("Error adding friend:", error);
       Alert.alert("Error", "Something went wrong, please try again later.");

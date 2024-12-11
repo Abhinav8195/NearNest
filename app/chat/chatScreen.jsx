@@ -1,14 +1,23 @@
-import { SafeAreaView, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, SafeAreaView, StyleSheet, Text } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useChatContext } from '../../context/ChatContext';
 import { ChannelList } from 'stream-chat-expo';
-import { router } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
 import { auth } from '../../config/firebase';
+import { theme } from '../../constants/theme';
 
 const ChatScreen = () => {
   const { chatClient, setCurrentChannel } = useChatContext();
   const [userChannels, setUserChannels] = useState([]);
   const user = auth.currentUser; 
+  const navigation = useNavigation();
+  useEffect(()=>{
+    navigation.setOptions({
+      headerShown: true,
+      headerBackTitleVisible: '',
+      title:  'Username',
+    });
+  },[])
 
   useEffect(() => {
     const fetchUserChannels = async () => {
@@ -20,8 +29,6 @@ const ChatScreen = () => {
           const channelsResponse = await chatClient.queryChannels({
             members: { $in: [user.uid] },
           });
-          console.log("Fetched Channels Response:", channelsResponse);
-
           if (channelsResponse && channelsResponse.length > 0) {
             
             setUserChannels(channelsResponse);
@@ -47,15 +54,16 @@ const ChatScreen = () => {
 
 
   if (!user || userChannels.length === 0) {
-    return <Text>Loading or no channels available...</Text>;
+    return <ActivityIndicator size={'large'} color={theme.Colors.primary} style={{flex:1,alignItems:'center',justifyContent:'center'}}/>
   }
-
+const filters = {type:'messaging',members:{ $in :[user.uid]}}
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <ChannelList
         channels={userChannels}
         onSelect={onSelect} 
+        filters={filters}
       />
     </SafeAreaView>
   );
