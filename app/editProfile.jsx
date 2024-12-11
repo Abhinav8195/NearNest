@@ -10,7 +10,7 @@ import defaultUserImage from '../assets/images/defaultUser.png';
 import * as ImagePicker from 'expo-image-picker';
 import Button from '../components/Button';
 import { auth } from '../config/firebase';
-import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 
 // Initialize Firestore
 const db = getFirestore();
@@ -71,7 +71,7 @@ const EditProfile = () => {
       const userRef = doc(db, 'users', userId);
       const imageToSave = selectedImage || defaultUserImage;
 
-      await setDoc(userRef, {
+      await updateDoc(userRef, {
         name: name || '',
         username: username || '',
         bio: bio || '',
