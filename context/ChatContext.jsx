@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { StreamChat } from 'stream-chat';
 import { getFirestore, doc, getDoc } from "firebase/firestore";
 import { OverlayProvider, Chat } from 'stream-chat-expo';
+import { router } from "expo-router";
 
 export const ChatContext = createContext({});
 
@@ -10,7 +11,7 @@ const db = getFirestore();
 
 const ChatContextProvider = ({ children }) => {
   const [chatClient, setChatClient] = useState(null);
-  const [currentChannel,setCurrentChannel]=useState()
+  const [currentChannel, setCurrentChannel] = useState();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
@@ -91,10 +92,14 @@ const ChatContextProvider = ({ children }) => {
           );
 
           setChatClient(client);
-          const globalChannel = client.channel('messaging', "global", {
+
+          // Commenting out the livestream chat initialization code
+          /*
+          const globalChannel = client.channel('livestream', "global", {
             name: "join now",
           });
           await globalChannel.watch();
+          */
 
         } catch (error) {
           console.error("Error initializing chat client:", error);
@@ -118,16 +123,39 @@ const ChatContextProvider = ({ children }) => {
     };
   }, [chatClient]);
 
+  const startDMChatRoom = async (chatWithUser) => {
+    if (!chatClient || !chatWithUser?.uid || !user?.uid) {
+      console.error("Error: Missing user data for DM");
+      return;
+    }
+  
+    try {
+      // Use user.uid from context as the current user ID
+      const [user1, user2] = [user.uid, chatWithUser.uid].sort();
+      const channelID = `dm-${user1}-${user2}`;
+  
+      // Ensure members are passed as an array of strings (user IDs)
+      const newChannel = chatClient.channel('messaging', channelID, {
+        members: [user1, user2],
+      });
+  
+      await newChannel.watch();
+      setCurrentChannel(newChannel);
+      router.push('/chat/chatScreen');
+    } catch (error) {
+      console.error("Error starting DM:", error);
+    }
+  };
+
   if (loading) {
     return null; 
   }
 
   const value = {
-   
     currentChannel,
     chatClient,
-    setCurrentChannel
- 
+    setCurrentChannel,
+    startDMChatRoom
   };
 
   return (
