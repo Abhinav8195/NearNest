@@ -10,27 +10,29 @@ import { doc, onSnapshot } from 'firebase/firestore';  // Import onSnapshot for 
 export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
+  const [postsCount, setPostsCount] = useState(0);  
   const user = auth.currentUser;
   const router = useRouter();
-  console.log('abcd', userData);
+  // console.log('User Data:', userData);
 
   useEffect(() => {
-    const unsubscribe = () => {
-      if (user) {
-        const userRef = doc(db, 'users', user.uid);
-        const unsubscribeSnapshot = onSnapshot(userRef, (userDoc) => {
-          if (userDoc.exists()) {
-            setUserData(userDoc.data());
-          }
-        });
-        return () => unsubscribeSnapshot();
-      }
-    };
+    if (user) {
+      // Fetch user profile data using onSnapshot (real-time updates)
+      const userRef = doc(db, 'users', user.uid);
+      const unsubscribeSnapshot = onSnapshot(userRef, (userDoc) => {
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          setUserData(data);
+          setPostsCount(Number(data.posts) || 0);  // Set posts count from the user's 'posts' field, default to 0 if undefined
+        }
+      });
 
-    unsubscribe();
+      // Once data is fetched, stop loading
+      setLoading(false);
 
-    // Remove loading indicator once data is fetched
-    setLoading(false);
+      // Clean up the listener when component unmounts
+      return () => unsubscribeSnapshot();
+    }
   }, [user]);
 
   const handleLogout = () => {
@@ -100,7 +102,7 @@ export default function Profile() {
 
           <View style={styles.statsContainer}>
             <View style={styles.stat}>
-              <Text style={styles.statNumber}>0</Text>
+              <Text style={styles.statNumber}>{postsCount}</Text>
               <Text style={styles.statLabel}>posts</Text>
             </View>
 
@@ -202,8 +204,8 @@ const styles = StyleSheet.create({
   emailContainer: {
     marginTop: 10,
   },
-  profileContainer:{
-    marginTop:2
+  profileContainer: {
+    marginTop: 2,
   },
   emailText: {
     fontSize: 14,
