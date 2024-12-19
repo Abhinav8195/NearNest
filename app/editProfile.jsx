@@ -9,11 +9,9 @@ import Feather from '@expo/vector-icons/Feather';
 import defaultUserImage from '../assets/images/defaultUser.png';
 import * as ImagePicker from 'expo-image-picker';
 import Button from '../components/Button';
-import { auth } from '../config/firebase';
-import { getFirestore, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
-
-// Initialize Firestore
-const db = getFirestore();
+import { auth, db, storage } from '../config/firebase';
+import { getDoc, doc, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const EditProfile = () => {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -69,7 +67,17 @@ const EditProfile = () => {
 
     try {
       const userRef = doc(db, 'users', userId);
-      const imageToSave = selectedImage || defaultUserImage;
+      let imageUrl = selectedImage;
+
+      if (selectedImage && selectedImage !== defaultUserImage) {
+        const response = await fetch(selectedImage);
+        const blob = await response.blob();
+        const filename = `profilePictures/${userId}/${new Date().getTime()}`;
+        const storageRef = ref(storage, filename);
+
+        await uploadBytes(storageRef, blob);
+        imageUrl = await getDownloadURL(storageRef);
+      }
 
       await updateDoc(userRef, {
         name: name || '',
@@ -78,11 +86,11 @@ const EditProfile = () => {
         phoneNumber: phoneNumber || '',
         gender: gender || 'Male',
         link: link || '',
-        profilePicture: imageToSave,
+        profilePicture: imageUrl,
       });
 
       alert('Profile updated successfully');
-      router.replace('/profile')
+      router.replace('/profile');
     } catch (error) {
       console.log('Error updating profile:', error);
       alert('Error updating profile');
@@ -105,12 +113,15 @@ const EditProfile = () => {
     });
 
     if (!result.canceled) {
-      setSelectedImage(result.assets[0].uri);
+      const { uri } = result.assets[0];
+      setSelectedImage(uri);
     }
   };
+
   const clearLink = () => {
     setLink('');
   };
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView

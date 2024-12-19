@@ -7,10 +7,11 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import ChatContextProvider from '../context/ChatContext';
+import { LogBox } from 'react-native';
 
 
 
-
+LogBox.ignoreLogs(['Warning:TNodeChildrenRenderer','Warning: TRenderEngineProvider','Warning: MemoizedTNodeRenderer'])
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {

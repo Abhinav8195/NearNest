@@ -13,24 +13,18 @@ export default function Profile() {
   const [postsCount, setPostsCount] = useState(0);  
   const user = auth.currentUser;
   const router = useRouter();
-  // console.log('User Data:', userData);
 
   useEffect(() => {
     if (user) {
-      // Fetch user profile data using onSnapshot (real-time updates)
       const userRef = doc(db, 'users', user.uid);
       const unsubscribeSnapshot = onSnapshot(userRef, (userDoc) => {
         if (userDoc.exists()) {
           const data = userDoc.data();
           setUserData(data);
-          setPostsCount(Number(data.posts) || 0);  // Set posts count from the user's 'posts' field, default to 0 if undefined
+          setPostsCount(Number(data.posts) || 0);  
         }
       });
-
-      // Once data is fetched, stop loading
       setLoading(false);
-
-      // Clean up the listener when component unmounts
       return () => unsubscribeSnapshot();
     }
   }, [user]);
@@ -62,10 +56,9 @@ export default function Profile() {
     );
   };
 
-  // Function to extract URL and open it
   const handleLinkPress = (text) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const match = text.match(urlRegex); // Extract URL using regex
+    const match = text.match(urlRegex); 
 
     if (match && match[0]) {
       Linking.openURL(match[0]).catch((err) => console.error('Failed to open link:', err));

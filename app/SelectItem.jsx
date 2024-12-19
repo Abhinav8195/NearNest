@@ -27,21 +27,20 @@ const SelectItem = () => {
     setSelectedImages(updatedImages);
   };
 
-  // Automatically go back if there are no selected images
   useEffect(() => {
     if (selectedImages.length === 0) {
       router.back();
     }
   }, [selectedImages]);
 
-  // Dynamically fetch image dimensions for each image
+
   useEffect(() => {
     const fetchImageDimensions = () => {
       const dimensions = [];
       selectedImages.forEach((item, index) => {
         Image.getSize(item, (width, height) => {
           dimensions[index] = { width, height };
-          setImageDimensions([...dimensions]); // Update the state with dimensions of all images
+          setImageDimensions([...dimensions]); 
         });
       });
     };
@@ -78,11 +77,11 @@ const SelectItem = () => {
                 <Image
                   source={{ uri: item }}
                   style={{
-                    width: wp(80), // Set width as per wp
+                    width: wp(80), 
                     height: imageDimensions[index]
-                      ? (imageDimensions[index].height / imageDimensions[index].width) * wp(80) // Adjust height according to aspect ratio
-                      : wp(80), // Fallback to wp(80) if dimension is not available yet
-                    resizeMode: 'contain', // Ensure proper aspect ratio
+                      ? (imageDimensions[index].height / imageDimensions[index].width) * wp(80) 
+                      : wp(80),
+                    resizeMode: 'contain', 
                   }}
                 />
               </Pressable>

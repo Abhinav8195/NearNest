@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Pressable, SafeAreaView, StyleSheet, Text, View, ScrollView, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Pressable, SafeAreaView, StyleSheet, Text, View, ScrollView, Image, FlatList } from 'react-native';
 import { hp, wp } from '../../helpers/common';
 import { theme } from '../../constants/theme';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -7,10 +7,36 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
+import { db, auth } from '../../config/firebase';  
+import { collection, getDocs } from 'firebase/firestore';
+import PostCard from '../../components/PostCard';
+import Loading from '../../components/Loading';
 
 const Home = () => {
   const [selectedImages, setSelectedImages] = useState([]);
+  const [posts, setPosts] = useState([]);
   const router = useRouter();
+  useEffect(() => {
+    const fetchPosts = async () => {
+      if (!auth.currentUser) return;
+      
+      try {
+        const postsCollectionRef = collection(db, 'posts', auth.currentUser.uid, 'userPosts');
+        const querySnapshot = await getDocs(postsCollectionRef);
+        
+        const fetchedPosts = querySnapshot.docs.map(doc => ({
+          id: doc.id, 
+          ...doc.data() 
+        }));
+
+        setPosts(fetchedPosts);
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+      }
+    };
+
+    fetchPosts();
+  }, []);
 
   const openImagePicker = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -52,6 +78,22 @@ const Home = () => {
             </Pressable>
           </View>
         </View>
+
+        <FlatList
+          data={posts}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listStyle}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({ item }) => (
+            <PostCard item={item} currentUser={auth.currentUser} router={router} />
+          )}
+          ListFooterComponent={(
+        
+              <View style={{marginVertical:posts.length===0?200:30}}>
+                <Loading />
+              </View>
+          )}
+        />
       </View>
     </SafeAreaView>
   );
@@ -103,4 +145,8 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
   },
+  listStyle:{
+    paddingTop:20,
+    paddingHorizontal:wp(4)
+  }
 });

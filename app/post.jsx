@@ -4,6 +4,10 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { AntDesign, MaterialIcons } from '@expo/vector-icons'; 
 import RichTextEditor from '../components/RichTextEditor';
 import { theme } from '../constants/theme';
+import { storage, db } from '../config/firebase'; // Assuming firebase configuration is in this file
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth } from '../config/firebase'; 
 
 const Post = () => {
   const { selectedImages } = useLocalSearchParams(); 
@@ -19,9 +23,50 @@ const Post = () => {
     console.log('Parsed images:', images);
   }, [selectedImages, images]);
 
-  const handlePost = () => {
-    console.log('Post submitted with images:', images, 'location:', location);
+  const handlePost = async () => {
+    setLoading(true);
+    try {
+      // Upload images to Firebase Storage
+      const imageUrls = await Promise.all(
+        images.map(async (image) => {
+          const response = await fetch(image);
+          const blob = await response.blob();
+          const filename = `posts/${auth.currentUser.uid}/${new Date().getTime()}`;
+          const storageRef = ref(storage, filename);
+          await uploadBytes(storageRef, blob);
+          return await getDownloadURL(storageRef);
+        })
+      );
+  
+      // Create unique post ID for each post (based on timestamp or other unique value)
+      const postId = new Date().getTime().toString();  // Use timestamp for unique ID
+      const postRef = doc(db, 'posts', auth.currentUser.uid, 'userPosts', postId);
+      
+      // Store the post
+      await setDoc(postRef, {
+        userId: auth.currentUser.uid,
+        body: bodyref.current,
+        images: imageUrls, // Array of image URLs
+        location,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+  
+      // Store the postId in the user's document for easy reference when they want to delete it
+      const userRef = doc(db, 'users', auth.currentUser.uid);
+      await setDoc(userRef, {
+        posts: { [postId]: postId }, // Store postId in a field (to delete it later)
+      }, { merge: true });
+  
+      console.log('Post successfully submitted');
+      router.push('/home');  // Navigate to feed or home page after post is created
+    } catch (error) {
+      console.error('Error submitting post:', error);
+    } finally {
+      setLoading(false);
+    }
   };
+  
 
   const handleBack = () => {
     router.back();
@@ -33,7 +78,6 @@ const Post = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
           <View style={styles.container}>
             <View style={styles.header}>
@@ -43,6 +87,21 @@ const Post = () => {
               <Text style={styles.headerTitle}>New Post</Text>
               <View style={styles.emptySpace} />
             </View>
+
+             {/* Location Input with Heading and Icon */}
+             <View style={{marginBottom:20}}>
+                <View style={styles.locationContainer}>
+                  <MaterialIcons name="location-on" size={24} color="black" />
+                  <Text style={styles.locationLabel}>Add Location</Text>
+                </View>
+                <TextInput
+                  style={styles.locationInput}
+                  placeholder="Enter location"
+                  value={location}
+                  onChangeText={setLocation}
+            />
+             </View>
+
             <RichTextEditor editorRef={editorRef} onChange={body => (bodyref.current = body)} />
             <ScrollView
               horizontal
@@ -59,24 +118,14 @@ const Post = () => {
                 <Text>No images selected</Text>
               )}
             </ScrollView>
-
+              
            
 
-            {/* Location Input with Heading and Icon */}
-            <View style={styles.locationContainer}>
-              <MaterialIcons name="location-on" size={24} color="black" />
-              <Text style={styles.locationLabel}>Add Location</Text>
-            </View>
-            <TextInput
-              style={styles.locationInput}
-              placeholder="Enter location"
-              value={location}
-              onChangeText={setLocation}
-            />
-
             {/* Submit Button */}
-            <Pressable style={styles.submitButton} onPress={handlePost}>
-              <Text style={styles.submitButtonText}>Submit</Text>
+            <Pressable style={styles.submitButton} onPress={handlePost} disabled={loading}>
+              <Text style={styles.submitButtonText}>
+                {loading ? 'Submitting...' : 'Submit'}
+              </Text>
             </Pressable>
           </View>
         </ScrollView>
@@ -111,15 +160,17 @@ const styles = StyleSheet.create({
   },
   imageScrollContainer: {
     paddingVertical: 10,
+    // backgroundColor:'pink',
+    height:200
   },
   imageWrapper: {
     marginHorizontal: 5,  
   },
   imagePreview: {
-    width: 130,  // Adjusted size for a slightly smaller image
-    height: 130,  // Matching height to width for a square aspect ratio
+    width: 130,
+    height: 130,
     borderRadius: 10,
-    resizeMode: 'cover', // Ensure images maintain aspect ratio and fill the view
+    resizeMode: 'cover',
   },
   locationContainer: {
     flexDirection: 'row',

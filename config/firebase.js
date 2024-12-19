@@ -2,15 +2,16 @@ import { initializeApp } from "firebase/app";
 import {getFirestore} from 'firebase/firestore'
 import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getStorage } from 'firebase/storage';
 
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCnIE3dIdRh5irJ84gNLJsWQ0i7pFA8kz0",
-  authDomain: "nearnest-f1575.firebaseapp.com",
-  projectId: "nearnest-f1575",
-  storageBucket: "nearnest-f1575.firebasestorage.app",
-  messagingSenderId: "49364743801",
-  appId: "1:49364743801:web:4df699e4450a6c6f9806a8"
+  apiKey: "AIzaSyDAlbZkpQ0xW0a8fnhTMGSo859seH11leU",
+  authDomain: "petadopt-d4bc6.firebaseapp.com",
+  projectId: "petadopt-d4bc6",
+  storageBucket: "petadopt-d4bc6.appspot.com",
+  messagingSenderId: "232278784977",
+  appId: "1:232278784977:web:d935bcbab776db83ab3ef0"
 };
 
 // Initialize Firebase
@@ -19,3 +20,4 @@ export const auth =initializeAuth(app, {
     persistence: getReactNativePersistence(AsyncStorage)
   });;
   export const db= getFirestore(app)
+  export const storage = getStorage(app);

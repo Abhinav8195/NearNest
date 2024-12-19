@@ -88,7 +88,7 @@ export default function SignUp() {
         phone: phone,
         email: email,
         uid: user.uid,
-        premium: false,
+        private: true,
       });
       router.replace('/home');
     } catch (error) {
