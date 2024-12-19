@@ -122,7 +122,7 @@ export default function Profile() {
             </View>
 
             <View style={styles.stat}>
-              <Text style={styles.statNumber}>{userData?.followersCount}</Text>
+              <Text style={styles.statNumber}>{userData?.followersCount || 0}</Text>
               <Text style={styles.statLabel}>followers</Text>
             </View>
 

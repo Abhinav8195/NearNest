@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Modal, Alert } from 'react-native';
 import Avatar from './Avatar';
 import defaultUserImage from '../assets/images/defaultUser.png';
 import { hp, wp } from '../helpers/common';
@@ -12,6 +12,7 @@ import RenderHTML from 'react-native-render-html';
 import Video from 'expo-av';
 import Carousel from 'react-native-reanimated-carousel'; 
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { deletePost } from '../services/postService';
 
 const textStyle = {
   color: theme.Colors.dark,
@@ -34,6 +35,7 @@ const PostCard = ({ item, router, currentUser, hasShadow = true }) => {
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(item?.likes || 0);
   const [currentIndex, setCurrentIndex] = useState(0);  
+  const [modalVisible, setModalVisible] = useState(false);
 
   const handleLike = () => {
     setLiked(!liked);
@@ -52,6 +54,16 @@ const PostCard = ({ item, router, currentUser, hasShadow = true }) => {
 
   const createdAt = moment(item?.createdAt.seconds * 1000).format('MMM D'); // Format post time
 
+  const handleDelete = async () => {
+    setModalVisible(false);
+    try {
+      await deletePost(item.id); 
+      Alert.alert('Success', 'Post deleted successfully');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to delete the post');
+    }
+  };
+
   return (
     <View style={[styles.container, hasShadow && shadowStyles]}>
       <View style={styles.header}>
@@ -62,7 +74,7 @@ const PostCard = ({ item, router, currentUser, hasShadow = true }) => {
             <Text style={styles.posttime}>{createdAt}</Text>
           </View>
         </View>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => setModalVisible(true)}>
           <Entypo name="dots-three-horizontal" size={24} color={theme.Colors.text} />
         </TouchableOpacity>
       </View>
@@ -123,17 +135,8 @@ const PostCard = ({ item, router, currentUser, hasShadow = true }) => {
       <View style={styles.footer}>
         <View style={styles.footerButton}>
           <TouchableOpacity onPress={handleLike}>
-
-            {
-                liked?<FontAwesome name="heart" size={24} color={theme.Colors.rose} />:
-                <Feather
-              name="heart"
-              size={24}
-              color={theme.Colors.textLight}
-            />
-            }
-         
-            
+            {liked ? <FontAwesome name="heart" size={24} color={theme.Colors.rose} /> :
+              <Feather name="heart" size={24} color={theme.Colors.textLight} />}
           </TouchableOpacity>
           <Text style={styles.count}>{likes}</Text>
         </View>
@@ -151,6 +154,24 @@ const PostCard = ({ item, router, currentUser, hasShadow = true }) => {
           </TouchableOpacity>
         </View>
       </View>
+
+      <Modal
+        transparent={true}
+        visible={modalVisible}
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <TouchableOpacity onPress={handleDelete}>
+              <Text style={styles.modalOption}>Delete</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setModalVisible(false)}>
+              <Text style={styles.modalOption}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -230,5 +251,22 @@ const styles = StyleSheet.create({
   },
   activeDot: {
     backgroundColor: theme.Colors.primary,  
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContainer: {
+    width: '80%',
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalOption: {
+    fontSize: 18,
+    marginVertical: 10,
   },
 });
