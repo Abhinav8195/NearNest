@@ -1,18 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, SafeAreaView, TouchableOpacity, Image, StyleSheet, Alert, ActivityIndicator, Linking } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, SafeAreaView, TouchableOpacity, Image, StyleSheet, Alert, ActivityIndicator, Linking, ScrollView } from 'react-native';
 import { auth, db } from '../../config/firebase';
 import { useRouter } from 'expo-router';
 import { theme } from '../../constants/theme';
 import { hp, wp } from '../../helpers/common';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { doc, onSnapshot } from 'firebase/firestore';  // Import onSnapshot for real-time updates
+import { doc, onSnapshot } from 'firebase/firestore';  
+import AllPost from '../../components/AllPost';
+import { fetchPosts } from '../../services/postService';
 
 export default function Profile() {
   const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState([]);
   const [userData, setUserData] = useState(null);
   const [postsCount, setPostsCount] = useState(0);  
   const user = auth.currentUser;
   const router = useRouter();
+
+ 
+  const postsFetched = useRef(false);
+
+  useEffect(() => {
+    const loadPosts = async () => {
+      if (!postsFetched.current) {  
+        try {
+          const fetchedPosts = await fetchPosts();
+          setPosts(fetchedPosts);
+          postsFetched.current = true; 
+        } catch (error) {
+          console.error("Error fetching posts:", error);
+        }
+      }
+    };
+
+    loadPosts();
+  }, []); 
 
   useEffect(() => {
     if (user) {
@@ -77,7 +99,7 @@ export default function Profile() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.profileHeader}>
+      <ScrollView style={styles.profileHeader} showsVerticalScrollIndicator={false}>
         {/* Header with Username and Logout Button */}
         <View style={styles.headerRow}>
           <Text style={styles.username}>{userData?.username}</Text>
@@ -95,12 +117,12 @@ export default function Profile() {
 
           <View style={styles.statsContainer}>
             <View style={styles.stat}>
-              <Text style={styles.statNumber}>{postsCount}</Text>
+              <Text style={styles.statNumber}>{posts.length}</Text>
               <Text style={styles.statLabel}>posts</Text>
             </View>
 
             <View style={styles.stat}>
-              <Text style={styles.statNumber}>0</Text>
+              <Text style={styles.statNumber}>{userData?.followersCount}</Text>
               <Text style={styles.statLabel}>followers</Text>
             </View>
 
@@ -136,7 +158,9 @@ export default function Profile() {
             <Text style={styles.text}>Share Profile</Text>
           </TouchableOpacity>
         </View>
-      </View>
+
+        <AllPost posts={posts} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -207,7 +231,7 @@ const styles = StyleSheet.create({
   },
   linkText: {
     fontSize: 14,
-    color: theme.Colors.primary,  // You can set any color here
+    color: theme.Colors.primary,
     fontWeight: '500',
     textDecorationLine: 'underline',
   },

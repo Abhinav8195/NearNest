@@ -1,5 +1,5 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useState } from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import Avatar from './Avatar';
 import defaultUserImage from '../assets/images/defaultUser.png';
 import { hp, wp } from '../helpers/common';
@@ -10,7 +10,8 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import moment from 'moment';
 import RenderHTML from 'react-native-render-html';
 import Video from 'expo-av';
-import ImageViewing from 'react-native-image-viewing'; // Import ImageViewing
+import Carousel from 'react-native-reanimated-carousel'; 
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 const textStyle = {
   color: theme.Colors.dark,
@@ -32,17 +33,11 @@ const tagsStyles = {
 const PostCard = ({ item, router, currentUser, hasShadow = true }) => {
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(item?.likes || 0);
-  const [isImageViewerVisible, setImageViewerVisible] = useState(false); // State for image viewer modal
-  const [currentImageIndex, setCurrentImageIndex] = useState(0); // Index of current image being viewed
-console.log('object',item)
+  const [currentIndex, setCurrentIndex] = useState(0);  
+
   const handleLike = () => {
     setLiked(!liked);
     setLikes(liked ? likes - 1 : likes + 1);
-  };
-
-  const handleImagePress = (index) => {
-    setCurrentImageIndex(index); // Set the index of the image being viewed
-    setImageViewerVisible(true); // Show the image viewer modal
   };
 
   const shadowStyles = {
@@ -55,7 +50,7 @@ console.log('object',item)
     elevation: 1,
   };
 
-  const createdAt = moment(item?.createdAt.seconds * 1000).format('MMM D'); // Convert seconds to ms
+  const createdAt = moment(item?.createdAt.seconds * 1000).format('MMM D'); // Format post time
 
   return (
     <View style={[styles.container, hasShadow && shadowStyles]}>
@@ -80,15 +75,37 @@ console.log('object',item)
         </View>
       </View>
 
-      {/* Displaying images as a swipeable gallery */}
+      {/* Displaying images as a swipeable gallery using Carousel */}
       {item?.images?.length > 0 && (
-        <TouchableOpacity onPress={() => handleImagePress(0)}>
-          <Image
-            source={{ uri: item.images[0] }}
-            style={styles.postMedia}
-            resizeMode="cover"
+        <View style={styles.carouselContainer}>
+          <Carousel
+            width={wp(87)}  
+            height={hp(40)}  
+            data={item.images}  
+            loop={false} 
+            autoPlay={false}  
+            onSnapToItem={(index) => setCurrentIndex(index)}  
+            renderItem={({ item }) => (
+              <Image
+                source={{ uri: item }}
+                style={styles.postMedia}
+                resizeMode="cover"
+              />
+            )}
           />
-        </TouchableOpacity>
+          {/* Pagination Dots */}
+          <View style={styles.paginationContainer}>
+            {item.images.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.paginationDot,
+                  currentIndex === index && styles.activeDot,  // Highlight the active dot
+                ]}
+              />
+            ))}
+          </View>
+        </View>
       )}
 
       {/* Video */}
@@ -106,12 +123,17 @@ console.log('object',item)
       <View style={styles.footer}>
         <View style={styles.footerButton}>
           <TouchableOpacity onPress={handleLike}>
-            <Feather
+
+            {
+                liked?<FontAwesome name="heart" size={24} color={theme.Colors.rose} />:
+                <Feather
               name="heart"
               size={24}
-              fill={liked ? theme.Colors.rose : 'transparent'}
-              color={liked ? theme.Colors.rose : theme.Colors.textLight}
+              color={theme.Colors.textLight}
             />
+            }
+         
+            
           </TouchableOpacity>
           <Text style={styles.count}>{likes}</Text>
         </View>
@@ -129,18 +151,6 @@ console.log('object',item)
           </TouchableOpacity>
         </View>
       </View>
-
-      {/* Image Viewing Modal with Enhanced Features */}
-      <ImageViewing
-        images={item?.images?.map((uri) => ({ uri })) || []} // Map image URIs to the required format
-        imageIndex={currentImageIndex}
-        visible={isImageViewerVisible}
-        onRequestClose={() => setImageViewerVisible(false)} // Close the image viewer
-        swipeToCloseEnabled={true} // Enable swipe-to-close functionality
-        doubleTapToZoomEnabled={true} // Enable double-tap zoom
-        animationType="fade" // Animation type when opening the modal (could be "fade", "slide", etc.)
-
-      />
     </View>
   );
 };
@@ -200,13 +210,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 18,
-  },
   count: {
     color: theme.Colors.text,
     fontSize: hp(1.8),
+  },
+  carouselContainer: {
+    alignItems: 'center',  
+  },
+  paginationContainer: {
+    flexDirection: 'row', 
+    marginTop: 10,
+  },
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: theme.Colors.gray,
+    marginHorizontal: 4,
+  },
+  activeDot: {
+    backgroundColor: theme.Colors.primary,  
   },
 });

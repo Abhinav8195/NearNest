@@ -11,31 +11,19 @@ import { db, auth } from '../../config/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import PostCard from '../../components/PostCard';
 import Loading from '../../components/Loading';
+import { fetchPosts } from '../../services/postService.js';
 
 const Home = () => {
   const [selectedImages, setSelectedImages] = useState([]);
   const [posts, setPosts] = useState([]);
   const router = useRouter();
   useEffect(() => {
-    const fetchPosts = async () => {
-      if (!auth.currentUser) return;
-      
-      try {
-        const postsCollectionRef = collection(db, 'posts', auth.currentUser.uid, 'userPosts');
-        const querySnapshot = await getDocs(postsCollectionRef);
-        
-        const fetchedPosts = querySnapshot.docs.map(doc => ({
-          id: doc.id, 
-          ...doc.data() 
-        }));
-
-        setPosts(fetchedPosts);
-      } catch (error) {
-        console.error('Error fetching posts:', error);
-      }
+    const loadPosts = async () => {
+      const fetchedPosts = await fetchPosts();
+      setPosts(fetchedPosts);
     };
 
-    fetchPosts();
+    loadPosts();
   }, []);
 
   const openImagePicker = async () => {

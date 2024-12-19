@@ -11,6 +11,7 @@ const Explore = () => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const currentUser = auth.currentUser;
+  console.log('explore',users)
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -40,7 +41,7 @@ const Explore = () => {
     return userDoc.exists() ? userDoc.data() : {};
   };
 
-  const addFriend = async (friendUid, friendName, friendProfilePicture) => {
+  const addFriend = async (friendUid, friendName, friendProfilePicture,friendusername) => {
     if (!currentUser) return;
 
     const validFriendName = friendName || "Unnamed Friend";
@@ -49,8 +50,10 @@ const Explore = () => {
     try {
       const currentUserDetails = await fetchCurrentUserDetails();
       const currentUserDisplayName = currentUserDetails.name || "Unnamed User";
-      const currentUserProfilePicture = currentUserDetails.photoURL || 'https://via.placeholder.com/150';
+      const currentUserProfilePicture = currentUserDetails.profilePicture || 'https://via.placeholder.com/150';
+      const currentUserusername = currentUserDetails.username || "Unnamed User";
 
+      
       const currentUserDoc = doc(db, "users", currentUser.uid);
       const friendDoc = doc(db, "users", friendUid);
 
@@ -59,6 +62,7 @@ const Explore = () => {
           uid: friendUid,
           name: validFriendName,
           profilePicture: validFriendProfilePicture,
+          username:friendusername
         }),
       };
       await updateDoc(currentUserDoc, currentUserUpdate);
@@ -69,6 +73,7 @@ const Explore = () => {
           name: currentUserDisplayName,
           profilePicture: currentUserProfilePicture,
           status: "pending",
+          username:currentUserusername
         }),
       };
       await updateDoc(friendDoc, friendUpdate);
@@ -100,7 +105,7 @@ const Explore = () => {
                 <View style={styles.userInfo}>
                   <Text style={styles.userName}>{item.name}</Text>
                   <Pressable
-                    onPress={() => addFriend(item.uid, item.name, item.profilePicture)}
+                    onPress={() => addFriend(item.uid, item.name, item.profilePicture ,item.username)}
                     style={styles.button}
                   >
                     <Text style={styles.buttonText}>Make Friend</Text>

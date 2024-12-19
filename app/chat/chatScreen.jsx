@@ -15,7 +15,7 @@ const ChatScreen = () => {
     navigation.setOptions({
       headerShown: true,
       headerBackTitleVisible: '',
-      title:  'Username',
+      title:  'Chats',
     });
   },[])
 
